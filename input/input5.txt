@@ -1,0 +1,22 @@
+int a;
+bool b;
+a=10;
+b= true;
+
+if(b){
+    a=0;
+    if(a>1){
+        a=-1;
+    }
+}
+else {
+    a=-1;
+}
+
+a=0;
+int c;
+c=10;
+while(c>=0){
+    a=a+1;
+}
+c=a*43;

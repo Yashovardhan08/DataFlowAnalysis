@@ -1,0 +1,29 @@
+int a;
+bool b;
+a=10;
+b= true;
+bool c;
+c=true;
+int d;
+d=49;
+
+if(b){
+    a=0;
+    if(a>1){
+        a=10;
+    }
+}
+else {
+    a=490;
+    if(c){
+        d=48;
+    }
+    else {
+        if(d==49){
+            d=a-d;
+        }
+        else {
+            d=a+d;
+        }
+    }
+}

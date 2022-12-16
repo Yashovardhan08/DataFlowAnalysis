@@ -1,0 +1,19 @@
+int a;
+bool b;
+a=10;
+b= true;
+int d;
+while(b){
+    a=0;
+    if(a>1){
+        a=a+1;
+    }
+}
+if(a>30){
+    a=94;
+}
+else {
+    a=-1;
+}
+d=a*a;
+

@@ -1,0 +1,19 @@
+int a;
+a=938;
+int b;
+b=a+94;
+int c;
+c=4893;
+bool bol;
+bol =true;
+while(bol){
+    while(c>490){
+        c=c-1;
+    }
+    a=a-1;
+    if(a<0){
+        bol=false;
+    }
+}
+
+b=a+c;

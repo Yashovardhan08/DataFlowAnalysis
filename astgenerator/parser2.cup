@@ -1,0 +1,170 @@
+import java_cup.runtime.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.List;
+
+/* Code executed by the parser before reading the first token */
+init with {::};
+
+/* Terminals (tokens returned by the scanner). */
+terminal token SEMI, PLUS, MINUS, TIMES, DIVIDE, EQUALS, MOD, LPAREN, RPAREN, LBRACE, RBRACE, COMMA;
+terminal token IF, ELSE, EEQUALS, GEQUALS, GREATER, LEQUALS, LESSER;
+terminal token WHILE, RETURN;
+terminal Integer NUMBER;
+terminal String ID;
+terminal Type TYPE;
+terminal boolean BOOLCONST;
+
+/* Non terminals */
+non terminal Expr expr, term, factor, bexpr;
+non terminal Assign assign;
+non terminal Instr instr;
+non terminal InstrList instrList;
+non terminal Program prog;
+non terminal ExprList expr_list;
+non terminal Block block;
+non terminal Declaration decl;
+non terminal DeclarationList decl_list;
+non terminal FCall fcall;
+non terminal IfStatement if;
+non terminal WhileExpr while;
+/* The grammar */
+
+precedence left MOD;
+precedence left  PLUS, MINUS;
+precedence left  TIMES;
+
+prog      ::= 
+			instrList:ilist 
+			{: RESULT = new Program(ilist); :}
+			;
+
+instrList ::=
+			instr:i {: RESULT = new InstrList(i); :} 
+			|
+			instr:i instrList:il {: il.addInstr(i); RESULT = il; :}
+			;
+
+instr     ::=
+			expr:e SEMI {: RESULT = e; :}
+ 			|
+			assign:a SEMI {: RESULT = a; :}
+			|
+			decl:d SEMI{: RESULT = d; :}
+			|
+			TYPE:ty ID:id LPAREN decl_list:dl RPAREN block:bl
+			{: RESULT = new FunctionDeclaration(ty,new IdExpr(id),dl,bl); :}
+			|
+			if:i {: RESULT = i; :}
+			|
+			while:w {: RESULT = w; :}
+			|
+			RETURN expr:e SEMI {: RESULT = new RetExpr(e); :}
+			;
+
+if		  ::= 
+			IF LPAREN bexpr:e1 RPAREN block:bl
+			{: RESULT = new IfStatement(e1,bl,null); :}
+			|
+			IF LPAREN ID:id RPAREN block:bl
+			{: RESULT = new IfStatement(new IdExpr(id),bl,null); :}
+			|
+			IF LPAREN bexpr:e1 RPAREN block:b1 ELSE block:b2
+			{: RESULT = new IfStatement(e1,b1,b2); :}
+			|
+			IF LPAREN ID:id RPAREN block:b1 ELSE block:b2
+			{: RESULT = new IfStatement(new IdExpr(id),b1,b2); :}
+			;
+
+while     ::=
+			WHILE LPAREN bexpr:exp RPAREN block:b 
+			{: RESULT = new WhileExpr(exp,b); :}
+			|
+			WHILE LPAREN ID:id RPAREN block:b 
+			{: RESULT = new WhileExpr(new IdExpr(id),b); :}
+			;
+
+fcall     ::=
+			ID:id LPAREN expr_list:el RPAREN {: RESULT = new FCall(id,el); :}
+			;
+
+block     ::= 
+			LBRACE instrList:il RBRACE {: RESULT = new Block(il); :}
+			;
+
+decl 	  ::=
+			// variable declaration
+			TYPE:ty ID:id {: RESULT = new Declaration(id,ty); :}
+			;
+
+decl_list ::= 
+			decl:d {: RESULT = new DeclarationList(d); :}
+			|
+			decl:d COMMA decl_list:dl {: dl.addDecl(d); RESULT = dl; :}
+			;
+
+assign    ::=
+			ID:id EQUALS expr:e
+			{: RESULT = new Assign(id, e); :}
+			;
+
+expr_list ::=
+			expr:e {: RESULT = new ExprList(e); :}
+			|
+			bexpr:b {: RESULT = new ExprList(b); :}
+			|
+			expr:e COMMA expr_list:el {: el.pushExpr(e); RESULT = el; :}
+			|
+			bexpr:e COMMA expr_list:el {: el.pushExpr(e); RESULT = el; :}
+			;
+
+bexpr     ::= 
+			expr:e1 EEQUALS expr:e2 {: RESULT = new EqualsBoolExpr(e1,e2); :}
+			|
+			expr:e1 LEQUALS expr:e2 {: RESULT = new LEqualsBoolExpr(e1,e2); :}
+			|
+			expr:e1 GEQUALS expr:e2 {: RESULT = new GEqualsBoolExpr(e1,e2); :}
+			|
+			expr:e1 LESSER expr:e2 {: RESULT = new LesserBoolExpr(e1,e2); :}
+			|
+			expr:e1 GREATER expr:e2 {: RESULT = new GreaterBoolExpr(e1,e2); :}
+			;
+
+expr      ::= 
+              expr:e1 PLUS term:e2
+	      {: RESULT = new AddExpr(e1, e2); :} 
+	      |
+		  	  expr:e1 MINUS term:e2 
+		  {: RESULT = new SubExpr(e1,e2); :} 
+		  |
+              term:e1 
+	      {: RESULT = e1; :} 
+	      ;
+
+term      ::= term:e1 TIMES factor:e2 
+	      {: RESULT = new MulExpr(e1, e2); :} 
+	      | 
+              factor:e                 
+	      {: RESULT = e; :} 
+	      ;
+
+factor    ::= NUMBER:n                 
+	      {: RESULT = new NumExpr(n);  :} 
+				|
+				      ID:id
+	      {: RESULT = new IdExpr(id);  :} 
+	      | 
+              MINUS factor:e             
+	      {: RESULT = new NegExpr(e);  :} 
+	      | 
+              LPAREN expr:e RPAREN     
+	      {: RESULT = e;  :} 
+		  |
+			fcall:fc
+		  {: RESULT = fc; :}
+		  |
+		  BOOLCONST:b {: RESULT = new BoolConstExpr(b); :}
+	      ;
